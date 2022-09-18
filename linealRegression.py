@@ -1,41 +1,74 @@
-from turtle import end_fill
+#librerías necesarias
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+ 
+ 
+#clase del modelo de regresión lineal
+class LinearRegression:
+    def __init__(self, x , y):
 
+        #datos de entrada
+        self.data = x
 
-df = pd.read_csv("data.csv", sep=",", index_col=False)
-df.columns = ["MinTemp", "MaxTemp"]
+        #datos de salida
+        self.label = y
 
-def gradient_descent(m_now,b_now,points,L):
-    m_gradient = 0
-    b_gradient = 0
-    n= len(points)
+        #coeficiente b1 
+        self.m = 0
 
-    for i in range(n):
-        x= points.iloc[i]['MinTemp']
-        y= points.iloc[i]['MaxTemp']
+        #coeficiente b0
+        self.b = 0
 
-        m_gradient += (-2/n) * x * (y-(m_now * x * b_now))
-        b_gradient += (-2/n) * (y-(m_now * x * b_now))
+        #tamaño de los datos
+        self.n = len(x)
+    
+    #función para entrenar modelo
+    def fit(self , epochs , lr):
+         
+        #gradient descent
+        for i in range(epochs):
 
-    m = m_now - m_gradient * L
-    b = b_now - b_gradient * L
+            #predecimos y con los coeficientes actuales
+            y_pred = self.m * self.data + self.b
+             
+            #Calculamos las derivadas de los parámetros 
+            D_m = (-2/self.n)*sum(self.data * (self.label - y_pred))
+            D_b = (-1/self.n)*sum(self.label-y_pred)
+             
+            #actualizamos parámetros
+            self.m = self.m - lr * D_m
+            self.c = self.b - lr * D_b
+             
+    #función para predecir valor de y según entrada x
+    def predict(self , inp):
+        y_pred = self.m * inp + self.b 
+        return y_pred
 
-    return m,b
+#cargamos datos en un dataframe
+df = pd.read_csv('datos.csv')
+ 
+#separamos datos en variable de entrada y salida
+x = np.array(df.iloc[:,0])
+y = np.array(df.iloc[:,1])
+ 
+#creamos objeto del modelo
+modeloLineal = LinearRegression(x,y)
+ 
+#entrenamos el modelo con 1000 iteraciones y un learning rate de 0.0001
+modeloLineal.fit(1000 , 0.0001) 
+ 
+#usamos el modelo entrenado para predecir los valores de y
+y_pred = modeloLineal.predict(x)
+ 
+#graficamos predicciones del modelo comparados con valor real
+plt.figure(figsize = (10,6))
 
-m = 0
-b = 0
-L = 0.0001
-epochs = 100
+#gráfica con valores reales
+plt.scatter(x,y , color = 'green')
 
-for i in range(epochs):
-    if i % 10 == 0:
-        print(f"Epoch: {i}")
-    m,b = gradient_descent(m,b,df,L)
-
-print(m,b)
-min = df['MinTemp'].min()
-max = df['MaxTemp'].max()
-plt.scatter(df['MinTemp'], df['MaxTemp'], color = "black")
-plt.plot(list(range(min,max)), [m * x + b for x in range(min,max)], color = "red")
+#gráfica con valores que el modelo predijo
+plt.plot(x , y_pred , color = 'k' , lw = 3)
+plt.xlabel('x' , size = 20)
+plt.ylabel('y', size = 20)
 plt.show()
